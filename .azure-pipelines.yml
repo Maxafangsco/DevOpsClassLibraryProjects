@@ -55,3 +55,4 @@ steps:
     command: 'push'
     publishVstsFeed: 'Lab 4 – Azure DevOps CI CD/MyNuGetFeed'
     searchPatternPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    arguments: '--skip-duplicate'
