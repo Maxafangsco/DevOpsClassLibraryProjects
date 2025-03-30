@@ -17,8 +17,10 @@ steps:
 - script: dotnet --list-sdks
   displayName: 'Check Installed .NET SDKs'
 
-- script: dotnet clean $(Build.SourcesDirectory) --configuration $(buildConfiguration)
+- script: |
+    dotnet clean "$(Build.SourcesDirectory)/ClassLibraryProjects.sln" --configuration $(buildConfiguration)
   displayName: 'Clean Solution'
+
 
 - task: DotNetCoreCLI@2
   displayName: 'Restore using dotnet CLI'
