@@ -1,30 +1,51 @@
 trigger:
-  - main
+- master
 
 pool:
-  name: Default  # Name of your self-hosted agent pool
+  name: 'SelfHostedAgents_ms'
 
 variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: UseDotNet@2
+- task: NuGetToolInstaller@1
   inputs:
-    packageType: 'sdk'
-    version: '6.x.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
+    versionSpec: '6.x'
 
-- script: dotnet restore
-  displayName: 'Restore dependencies'
+- script: dotnet --list-sdks
+  displayName: 'Check Installed .NET SDKs'
 
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'Build project'
+- task: DotNetCoreCLI@2
+  displayName: 'Restore using dotnet CLI'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
 
-- script: dotnet pack --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
-  displayName: 'Pack NuGet package'
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
 
-- task: NuGetCommand@2
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Pack NuGet Package'
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/StringLibrary.csproj'
+    configuration: '$(buildConfiguration)'
+    outputDir: '$(Build.ArtifactStagingDirectory)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Push NuGet Package to Azure Artifacts'
   inputs:
     command: 'push'
-    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
-    publishVstsFeed: '<your_feed_id>'  # Get this from Artifacts > Feed > Connect to feed
+    publishVstsFeed: 'Lab 4 – Azure DevOps CI CD/MyNuGetFeed'
+    searchPatternPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
