@@ -42,6 +42,7 @@ steps:
     packagesToPack: '**/StringLibrary.csproj'
     configuration: '$(buildConfiguration)'
     outputDir: '$(Build.ArtifactStagingDirectory)'
+    arguments: /p:Version=1.0.$(Build.BuildId) 
 
 - task: DotNetCoreCLI@2
   displayName: 'Push NuGet Package to Azure Artifacts'
